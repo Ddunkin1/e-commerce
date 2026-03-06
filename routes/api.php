@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
@@ -30,10 +31,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::post('/orders', [OrderController::class, 'store']);
 
-    // Admin
+    // Products & Categories CRUD
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{product}', [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+
+    // Admin
+    Route::get('/admin/stats', [AdminController::class, 'stats']);
+    Route::get('/admin/orders', [AdminController::class, 'orders']);
+    Route::patch('/admin/orders/{order}/status', [AdminController::class, 'updateStatus']);
 });
