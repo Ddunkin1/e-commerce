@@ -9,3 +9,4 @@ export const clearAuth = () => {
     localStorage.removeItem('user');
 };
 export const isLoggedIn = () => !!getToken();
+export const isAdmin = () => !!getUser()?.is_admin;

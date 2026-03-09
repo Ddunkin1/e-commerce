@@ -15,10 +15,17 @@ import Dashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminOrders from './pages/admin/AdminOrders';
-import { isLoggedIn } from './lib/auth';
+import AdminUsers from './pages/admin/AdminUsers';
+import { isLoggedIn, isAdmin } from './lib/auth';
 
 function Protected({ children }) {
     return isLoggedIn() ? children : <Navigate to="/login" />;
+}
+
+function AdminOnly({ children }) {
+    if (!isLoggedIn()) return <Navigate to="/login" />;
+    if (!isAdmin()) return <Navigate to="/" />;
+    return children;
 }
 
 function StoreLayout({ children }) {
@@ -49,10 +56,11 @@ export default function App() {
                 <Route path="/orders" element={<Protected><StoreLayout><Orders /></StoreLayout></Protected>} />
 
                 {/* Admin */}
-                <Route path="/admin" element={<Protected><Dashboard /></Protected>} />
-                <Route path="/admin/products" element={<Protected><AdminProducts /></Protected>} />
-                <Route path="/admin/categories" element={<Protected><AdminCategories /></Protected>} />
-                <Route path="/admin/orders" element={<Protected><AdminOrders /></Protected>} />
+                <Route path="/admin" element={<AdminOnly><Dashboard /></AdminOnly>} />
+                <Route path="/admin/products" element={<AdminOnly><AdminProducts /></AdminOnly>} />
+                <Route path="/admin/categories" element={<AdminOnly><AdminCategories /></AdminOnly>} />
+                <Route path="/admin/orders" element={<AdminOnly><AdminOrders /></AdminOnly>} />
+                <Route path="/admin/users" element={<AdminOnly><AdminUsers /></AdminOnly>} />
             </Routes>
         </BrowserRouter>
     );

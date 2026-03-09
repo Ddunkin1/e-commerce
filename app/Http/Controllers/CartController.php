@@ -25,11 +25,13 @@ class CartController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity'   => 'integer|min:1',
+            'size'       => 'nullable|string',
         ]);
 
         $cart = $this->getCart($request);
         $item = CartItem::where('cart_id', $cart->id)
             ->where('product_id', $request->product_id)
+            ->where('size', $request->size)
             ->first();
 
         if ($item) {
@@ -39,10 +41,18 @@ class CartController extends Controller
                 'cart_id'    => $cart->id,
                 'product_id' => $request->product_id,
                 'quantity'   => $request->quantity ?? 1,
+                'size'       => $request->size,
             ]);
         }
 
         return response()->json($cart->load('items.product'));
+    }
+
+    public function update(Request $request, CartItem $item)
+    {
+        $request->validate(['quantity' => 'required|integer|min:1']);
+        $item->update(['quantity' => $request->quantity]);
+        return response()->json($this->getCart($request)->load('items.product'));
     }
 
     public function remove(Request $request, CartItem $item)

@@ -22,6 +22,9 @@ class OrderController extends Controller
 
     public function show(Request $request, Order $order)
     {
+        if ($order->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
         return response()->json($order->load('items.product', 'payment'));
     }
 

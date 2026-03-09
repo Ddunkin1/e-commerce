@@ -1,33 +1,52 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ShoppingBag, Heart, ArrowLeft, Minus, Plus } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, Heart, ArrowLeft, Minus, Plus, Zap } from 'lucide-react';
 import api from '../lib/axios';
 import { isLoggedIn } from '../lib/auth';
 import toast from 'react-hot-toast';
 
+const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+
 export default function ProductDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [product, setProduct] = useState(null);
     const [qty, setQty] = useState(1);
+    const [size, setSize] = useState('M');
     const [liked, setLiked] = useState(false);
     const [adding, setAdding] = useState(false);
+    const [buying, setBuying] = useState(false);
 
     useEffect(() => {
         api.get(`/products/${id}`).then(r => setProduct(r.data));
     }, [id]);
 
     const addToCart = async () => {
-        if (!isLoggedIn()) { toast.error('Please login first 🔐'); return; }
+        if (!isLoggedIn()) { toast.error('Please login first'); navigate('/login'); return; }
         setAdding(true);
-        await api.post('/cart', { product_id: product.id, quantity: qty });
-        setAdding(false);
-        toast.success(`Added to cart! 🛍️`);
+        try {
+            await api.post('/cart', { product_id: product.id, quantity: qty, size });
+            toast.success(`Added to cart!`);
+        } finally {
+            setAdding(false);
+        }
+    };
+
+    const buyNow = async () => {
+        if (!isLoggedIn()) { toast.error('Please login first'); navigate('/login'); return; }
+        setBuying(true);
+        try {
+            await api.post('/cart', { product_id: product.id, quantity: qty, size });
+            navigate('/checkout');
+        } finally {
+            setBuying(false);
+        }
     };
 
     if (!product) return (
-        <div className="max-w-4xl mx-auto px-5 py-20">
-            <div className="grid md:grid-cols-2 gap-8">
-                <div className="skeleton h-80 rounded-3xl" />
+        <div className="max-w-5xl mx-auto px-5 py-20">
+            <div className="grid md:grid-cols-2 gap-10">
+                <div className="skeleton h-96 rounded-3xl" />
                 <div className="flex flex-col gap-4">
                     <div className="skeleton h-6 w-24 rounded-full" />
                     <div className="skeleton h-10 w-3/4 rounded-xl" />
@@ -39,16 +58,17 @@ export default function ProductDetail() {
     );
 
     return (
-        <div className="max-w-4xl mx-auto px-5 py-10">
+        <div className="max-w-5xl mx-auto px-5 py-10">
             <Link to="/products" className="inline-flex items-center gap-2 text-sm text-stone-400 hover:text-pink-500 mb-8 transition">
                 <ArrowLeft size={16} /> Back to Shop
             </Link>
 
             <div className="grid md:grid-cols-2 gap-10">
-                <div className="relative bg-gradient-to-br from-pink-50 to-rose-50 rounded-3xl h-80 flex items-center justify-center overflow-hidden">
+                {/* Image */}
+                <div className="relative bg-gradient-to-br from-pink-50 to-rose-50 rounded-3xl overflow-hidden" style={{ minHeight: '380px' }}>
                     {product.image
-                        ? <img src={product.image} alt={product.name} className="h-full w-full object-cover rounded-3xl" />
-                        : <ShoppingBag size={64} className="text-pink-200" />
+                        ? <img src={product.image} alt={product.name} className="w-full h-full object-cover" style={{ minHeight: '380px' }} />
+                        : <div className="flex items-center justify-center h-96"><ShoppingBag size={64} className="text-pink-200" /></div>
                     }
                     <button
                         onClick={() => setLiked(!liked)}
@@ -56,22 +76,53 @@ export default function ProductDetail() {
                     >
                         <Heart size={18} className={`transition ${liked ? 'fill-pink-400 text-pink-400' : 'text-pink-300'}`} />
                     </button>
+                    {product.stock === 0 && (
+                        <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full">Out of Stock</span>
+                    )}
+                    {product.stock > 0 && product.stock <= 5 && (
+                        <span className="absolute top-4 left-4 bg-orange-400 text-white text-xs font-semibold px-3 py-1 rounded-full">Only {product.stock} left!</span>
+                    )}
                 </div>
 
-                <div className="flex flex-col gap-4">
+                {/* Info */}
+                <div className="flex flex-col gap-5">
                     <span className="inline-block bg-pink-100 text-pink-500 text-xs font-semibold px-3 py-1 rounded-full w-fit">
                         {product.category?.name}
                     </span>
-                    <h1 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Playfair Display, serif' }}>{product.name}</h1>
-                    <p className="text-stone-400 text-sm leading-relaxed">{product.description}</p>
+
+                    <h1 className="text-2xl font-bold text-stone-800 leading-snug" style={{ fontFamily: 'Playfair Display, serif' }}>{product.name}</h1>
 
                     <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-pink-500">₱{Number(product.price).toLocaleString()}</span>
                     </div>
 
-                    <p className="text-xs text-stone-400">{product.stock} items in stock</p>
+                    <p className="text-stone-400 text-sm leading-relaxed">{product.description}</p>
 
+                    <div className="text-xs text-stone-400">{product.stock} items in stock</div>
+
+                    {/* Size selector */}
+                    <div>
+                        <p className="text-xs font-semibold text-stone-500 mb-2">SIZE</p>
+                        <div className="flex gap-2 flex-wrap">
+                            {SIZES.map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => setSize(s)}
+                                    className={`w-11 h-11 rounded-xl text-sm font-semibold border-2 transition-all ${
+                                        size === s
+                                            ? 'border-pink-500 bg-pink-500 text-white shadow-md shadow-pink-200'
+                                            : 'border-pink-100 text-stone-500 hover:border-pink-300 bg-white'
+                                    }`}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Quantity */}
                     <div className="flex items-center gap-3">
+                        <p className="text-xs font-semibold text-stone-500">QTY</p>
                         <div className="flex items-center gap-2 bg-pink-50 rounded-full px-3 py-1.5">
                             <button onClick={() => setQty(Math.max(1, qty - 1))} className="p-1 hover:text-pink-500 transition">
                                 <Minus size={14} />
@@ -81,12 +132,25 @@ export default function ProductDetail() {
                                 <Plus size={14} />
                             </button>
                         </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex gap-3 mt-1">
                         <button
                             onClick={addToCart}
-                            disabled={adding}
-                            className="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-full shadow-md shadow-pink-200 transition disabled:opacity-50"
+                            disabled={adding || product.stock === 0}
+                            className="flex-1 flex items-center justify-center gap-2 border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-semibold py-3 rounded-2xl transition disabled:opacity-40"
                         >
-                            {adding ? 'Adding...' : 'Add to Cart 🛍️'}
+                            <ShoppingBag size={16} />
+                            {adding ? 'Adding...' : 'Add to Cart'}
+                        </button>
+                        <button
+                            onClick={buyNow}
+                            disabled={buying || product.stock === 0}
+                            className="flex-1 flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-2xl shadow-md shadow-pink-200 transition disabled:opacity-40"
+                        >
+                            <Zap size={16} />
+                            {buying ? 'Processing...' : 'Buy Now'}
                         </button>
                     </div>
                 </div>

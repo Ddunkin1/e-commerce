@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, Eye, EyeOff } from 'lucide-react';
 import api from '../lib/axios';
 import { setAuth } from '../lib/auth';
 import toast from 'react-hot-toast';
@@ -9,6 +9,7 @@ export default function Login() {
     const navigate = useNavigate();
     const [form, setForm] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
+    const [showPw, setShowPw] = useState(false);
 
     const submit = async (e) => {
         e.preventDefault();
@@ -47,9 +48,14 @@ export default function Login() {
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-stone-500 mb-1.5">Password</label>
-                            <input type="password" required placeholder="••••••••"
-                                className="w-full border border-pink-100 rounded-2xl px-4 py-3 text-sm text-stone-600 placeholder-stone-300 focus:outline-none focus:border-pink-300 bg-pink-50/30"
-                                value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+                            <div className="relative">
+                                <input type={showPw ? 'text' : 'password'} required placeholder="••••••••"
+                                    className="w-full border border-pink-100 rounded-2xl px-4 py-3 pr-11 text-sm text-stone-600 placeholder-stone-300 focus:outline-none focus:border-pink-300 bg-pink-50/30"
+                                    value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+                                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-pink-400 transition">
+                                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
                         </div>
                         <button disabled={loading}
                             className="bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-2xl shadow-md shadow-pink-200 transition mt-2 disabled:opacity-50">

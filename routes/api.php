@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Cart
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'add']);
+    Route::patch('/cart/{item}', [CartController::class, 'update']);
     Route::delete('/cart/{item}', [CartController::class, 'remove']);
     Route::delete('/cart', [CartController::class, 'clear']);
 
@@ -33,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Products & Categories CRUD
     Route::post('/categories', [CategoryController::class, 'store']);
+    Route::put('/categories/{category}', [CategoryController::class, 'update']);
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{product}', [ProductController::class, 'update']);
@@ -42,4 +44,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/stats', [AdminController::class, 'stats']);
     Route::get('/admin/orders', [AdminController::class, 'orders']);
     Route::patch('/admin/orders/{order}/status', [AdminController::class, 'updateStatus']);
+    Route::get('/admin/users', [AdminController::class, 'users']);
+    Route::patch('/admin/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin']);
 });

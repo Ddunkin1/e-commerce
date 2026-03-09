@@ -25,6 +25,13 @@ class CategoryController extends Controller
         return response()->json($category, 201);
     }
 
+    public function update(Request $request, Category $category)
+    {
+        $request->validate(['name' => 'required|string|unique:categories,name,' . $category->id]);
+        $category->update(['name' => $request->name, 'slug' => Str::slug($request->name)]);
+        return response()->json($category);
+    }
+
     public function destroy(Category $category)
     {
         $category->delete();
