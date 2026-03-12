@@ -9,6 +9,8 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
+import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/admin/Dashboard';
@@ -16,7 +18,9 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
-import { isLoggedIn, isAdmin } from './lib/auth';
+import AdminRiders from './pages/admin/AdminRiders';
+import RiderDashboard from './pages/rider/RiderDashboard';
+import { isLoggedIn, isAdmin, isRider } from './lib/auth';
 
 function Protected({ children }) {
     return isLoggedIn() ? children : <Navigate to="/login" />;
@@ -25,6 +29,12 @@ function Protected({ children }) {
 function AdminOnly({ children }) {
     if (!isLoggedIn()) return <Navigate to="/login" />;
     if (!isAdmin()) return <Navigate to="/" />;
+    return children;
+}
+
+function RiderOnly({ children }) {
+    if (!isLoggedIn()) return <Navigate to="/login" />;
+    if (!isRider()) return <Navigate to="/" />;
     return children;
 }
 
@@ -54,6 +64,8 @@ export default function App() {
                 <Route path="/cart" element={<Protected><StoreLayout><Cart /></StoreLayout></Protected>} />
                 <Route path="/checkout" element={<Protected><StoreLayout><Checkout /></StoreLayout></Protected>} />
                 <Route path="/orders" element={<Protected><StoreLayout><Orders /></StoreLayout></Protected>} />
+                <Route path="/orders/:id" element={<Protected><StoreLayout><OrderDetail /></StoreLayout></Protected>} />
+                <Route path="/profile" element={<Protected><StoreLayout><Profile /></StoreLayout></Protected>} />
 
                 {/* Admin */}
                 <Route path="/admin" element={<AdminOnly><Dashboard /></AdminOnly>} />
@@ -61,6 +73,10 @@ export default function App() {
                 <Route path="/admin/categories" element={<AdminOnly><AdminCategories /></AdminOnly>} />
                 <Route path="/admin/orders" element={<AdminOnly><AdminOrders /></AdminOnly>} />
                 <Route path="/admin/users" element={<AdminOnly><AdminUsers /></AdminOnly>} />
+                <Route path="/admin/riders" element={<AdminOnly><AdminRiders /></AdminOnly>} />
+
+                {/* Rider */}
+                <Route path="/rider" element={<RiderOnly><RiderDashboard /></RiderOnly>} />
             </Routes>
         </BrowserRouter>
     );

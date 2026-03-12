@@ -60,10 +60,10 @@ export default function Navbar() {
                                     </span>
                                 )}
                             </Link>
-                            <div className="flex items-center gap-2 bg-pink-50 rounded-full px-3 py-1.5">
+                            <Link to="/profile" className="flex items-center gap-2 bg-pink-50 hover:bg-pink-100 rounded-full px-3 py-1.5 transition">
                                 <User size={14} className="text-pink-400" />
                                 <span className="text-xs font-medium text-pink-600">{user?.name?.split(' ')[0]}</span>
-                            </div>
+                            </Link>
                             <button onClick={logout} className="p-2 rounded-full hover:bg-red-50 transition">
                                 <LogOut size={16} className="text-rose-400" />
                             </button>
@@ -89,6 +89,7 @@ export default function Navbar() {
                     {link('/products', 'Shop')}
                     {isLoggedIn() && link('/orders', 'My Orders')}
                     {isLoggedIn() && link('/cart', 'Cart')}
+                    {isLoggedIn() && link('/profile', 'Profile')}
                     {isLoggedIn()
                         ? <button onClick={logout} className="text-sm text-left text-rose-400">Logout</button>
                         : <Link to="/login" className="text-sm text-pink-500">Login / Register</Link>

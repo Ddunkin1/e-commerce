@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Package } from 'lucide-react';
 import api from '../lib/axios';
 
@@ -13,6 +13,7 @@ const statusStyle = {
 const methodEmoji = { cash: '💵', gcash: '📱', card: '💳' };
 
 export default function Orders() {
+    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -44,7 +45,7 @@ export default function Orders() {
                     {orders.map(order => {
                         const s = statusStyle[order.status] || statusStyle.pending;
                         return (
-                            <div key={order.id} className="bg-white rounded-2xl border border-pink-50 shadow-sm overflow-hidden animate-fade-up">
+                            <div key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="bg-white rounded-2xl border border-pink-50 shadow-sm overflow-hidden animate-fade-up cursor-pointer hover:shadow-md hover:border-pink-200 transition-all">
                                 <div className="flex items-center justify-between px-5 py-4 border-b border-pink-50">
                                     <div>
                                         <span className="text-xs text-stone-400">Order</span>

@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RiderController;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -19,6 +20,7 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::patch('/profile', [AuthController::class, 'updateProfile']);
 
     // Cart
     Route::get('/cart', [CartController::class, 'index']);
@@ -44,6 +46,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/stats', [AdminController::class, 'stats']);
     Route::get('/admin/orders', [AdminController::class, 'orders']);
     Route::patch('/admin/orders/{order}/status', [AdminController::class, 'updateStatus']);
+    Route::patch('/admin/orders/{order}/assign-rider', [AdminController::class, 'assignRider']);
     Route::get('/admin/users', [AdminController::class, 'users']);
     Route::patch('/admin/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin']);
+    Route::get('/admin/riders', [AdminController::class, 'riders']);
+    Route::post('/admin/riders', [AdminController::class, 'createRider']);
+
+    // Rider
+    Route::get('/rider/orders', [RiderController::class, 'myOrders']);
+    Route::get('/rider/history', [RiderController::class, 'history']);
+    Route::patch('/rider/orders/{order}/delivery-status', [RiderController::class, 'updateDeliveryStatus']);
 });
