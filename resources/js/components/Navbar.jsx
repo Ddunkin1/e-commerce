@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Heart, LogOut, User, Menu, X } from 'lucide-react';
+import { ShoppingBag, Heart, LogOut, User, Menu, X, Search } from 'lucide-react';
 import { clearAuth, getUser, isLoggedIn } from '../lib/auth';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
@@ -11,6 +11,15 @@ export default function Navbar() {
     const user = getUser();
     const [cartCount, setCartCount] = useState(0);
     const [open, setOpen] = useState(false);
+    const [searchQ, setSearchQ] = useState('');
+
+    const submitSearch = (e) => {
+        e.preventDefault();
+        if (!searchQ.trim()) return;
+        navigate(`/products?search=${encodeURIComponent(searchQ.trim())}`);
+        setSearchQ('');
+        setOpen(false);
+    };
 
     useEffect(() => {
         if (isLoggedIn()) {
@@ -48,6 +57,18 @@ export default function Navbar() {
                     {link('/products', 'Shop')}
                     {isLoggedIn() && link('/orders', 'My Orders')}
                 </div>
+
+                {/* Search */}
+                <form onSubmit={submitSearch} className="hidden md:flex items-center bg-pink-50 rounded-full px-3 py-1.5 gap-2 w-44 focus-within:ring-2 focus-within:ring-pink-200 transition">
+                    <Search size={14} className="text-pink-300 flex-shrink-0" />
+                    <input
+                        type="text"
+                        value={searchQ}
+                        onChange={e => setSearchQ(e.target.value)}
+                        placeholder="Search..."
+                        className="bg-transparent text-xs text-stone-600 placeholder-stone-300 focus:outline-none w-full"
+                    />
+                </form>
 
                 <div className="hidden md:flex items-center gap-3">
                     {isLoggedIn() ? (

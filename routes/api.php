@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RiderController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
+Route::get('/products/{product}/reviews', [ReviewController::class, 'index']);
 Route::get('/categories', [CategoryController::class, 'index']);
 
 // Protected
@@ -28,6 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/cart/{item}', [CartController::class, 'update']);
     Route::delete('/cart/{item}', [CartController::class, 'remove']);
     Route::delete('/cart', [CartController::class, 'clear']);
+
+    // Reviews
+    Route::get('/products/{product}/reviews/eligibility', [ReviewController::class, 'eligibility']);
+    Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);

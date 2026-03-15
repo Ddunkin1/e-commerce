@@ -11,13 +11,27 @@ const features = [
     { icon: Sparkles, label: 'Best Quality', sub: 'Curated products' },
 ];
 
+const CATEGORY_COLORS = [
+    'from-pink-100 to-rose-100 text-pink-600',
+    'from-violet-100 to-purple-100 text-violet-600',
+    'from-sky-100 to-blue-100 text-sky-600',
+    'from-amber-100 to-yellow-100 text-amber-600',
+    'from-emerald-100 to-green-100 text-emerald-600',
+    'from-orange-100 to-red-100 text-orange-600',
+];
+
 export default function Home() {
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        api.get('/products').then(r => {
-            setProducts(Array.isArray(r.data) ? r.data.slice(0, 8) : []);
+        Promise.all([
+            api.get('/products'),
+            api.get('/categories'),
+        ]).then(([p, c]) => {
+            setProducts(Array.isArray(p.data) ? p.data.slice(0, 8) : []);
+            setCategories(Array.isArray(c.data) ? c.data : []);
             setLoading(false);
         });
     }, []);
@@ -72,6 +86,31 @@ export default function Home() {
                     ))}
                 </div>
             </section>
+
+            {/* Categories */}
+            {categories.length > 0 && (
+                <section className="max-w-6xl mx-auto px-5 py-12">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <p className="text-xs text-pink-400 font-semibold uppercase tracking-widest mb-1">Browse by</p>
+                            <h2 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Playfair Display, serif' }}>Categories</h2>
+                        </div>
+                        <Link to="/products" className="text-sm text-pink-500 hover:text-pink-600 font-medium">View all →</Link>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                        {categories.map((cat, i) => (
+                            <Link
+                                key={cat.id}
+                                to={`/products?category=${cat.id}`}
+                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-br ${CATEGORY_COLORS[i % CATEGORY_COLORS.length]} hover:scale-105 transition-transform duration-200 font-semibold text-sm text-center`}
+                            >
+                                <span className="text-2xl">🏷️</span>
+                                {cat.name}
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* Featured Products */}
             <section className="max-w-6xl mx-auto px-5 py-14">

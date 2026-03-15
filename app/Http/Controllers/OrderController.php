@@ -41,6 +41,17 @@ class OrderController extends Controller
             return response()->json(['message' => 'Cart is empty'], 422);
         }
 
+        foreach ($cart->items as $item) {
+            if (!$item->product) {
+                return response()->json(['message' => 'A product in your cart no longer exists.'], 422);
+            }
+            if ($item->quantity > $item->product->stock) {
+                return response()->json([
+                    'message' => "Not enough stock for \"{$item->product->name}\". Only {$item->product->stock} left."
+                ], 422);
+            }
+        }
+
         $total = $cart->items->sum(fn($item) => $item->product->price * $item->quantity);
 
         $order = Order::create([
@@ -57,6 +68,7 @@ class OrderController extends Controller
                 'quantity'   => $item->quantity,
                 'price'      => $item->product->price,
             ]);
+            $item->product->decrement('stock', $item->quantity);
         }
 
         Payment::create([
