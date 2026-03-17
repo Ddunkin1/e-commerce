@@ -10,3 +10,4 @@ export const clearAuth = () => {
 };
 export const isLoggedIn = () => !!getToken();
 export const isAdmin = () => !!getUser()?.is_admin;
+export const isRider = () => !!getUser()?.is_rider;

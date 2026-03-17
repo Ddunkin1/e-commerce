@@ -44,7 +44,7 @@ class AdminController extends Controller
     public function orders(Request $request)
     {
         $this->guard($request);
-        $query = Order::with('user', 'items.product', 'payment')->latest();
+        $query = Order::with('user', 'items.product', 'payment', 'rider')->latest();
 
         if ($request->status) {
             $query->where('status', $request->status);
@@ -78,5 +78,43 @@ class AdminController extends Controller
         }
         $user->update(['is_admin' => !$user->is_admin]);
         return response()->json($user);
+    }
+
+    public function riders(Request $request)
+    {
+        $this->guard($request);
+        $riders = User::where('is_rider', true)->withCount('assignedOrders')->orderByDesc('created_at')->get();
+        return response()->json($riders);
+    }
+
+    public function createRider(Request $request)
+    {
+        $this->guard($request);
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+        ]);
+
+        $rider = User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => $request->password,
+            'is_rider' => true,
+        ]);
+
+        return response()->json($rider, 201);
+    }
+
+    public function assignRider(Request $request, Order $order)
+    {
+        $this->guard($request);
+        $request->validate(['rider_id' => 'nullable|exists:users,id']);
+
+        $riderId = $request->rider_id;
+        $deliveryStatus = $riderId ? 'assigned' : 'unassigned';
+
+        $order->update(['rider_id' => $riderId, 'delivery_status' => $deliveryStatus]);
+        return response()->json($order->load('user', 'items.product', 'payment', 'rider'));
     }
 }

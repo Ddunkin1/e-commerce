@@ -18,7 +18,9 @@ export default function Login() {
             const res = await api.post('/login', form);
             setAuth(res.data.token, res.data.user);
             toast.success(`Welcome back, ${res.data.user.name}! 💕`);
-            navigate('/');
+            if (res.data.user.is_admin) navigate('/admin');
+            else if (res.data.user.is_rider) navigate('/rider');
+            else navigate('/');
         } catch {
             toast.error('Invalid email or password');
         } finally {

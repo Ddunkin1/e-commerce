@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Bike } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -11,10 +11,17 @@ const statusBadge = {
     completed:  'bg-green-100 text-green-700 border-green-200',
     cancelled:  'bg-red-100 text-red-600 border-red-200',
 };
+const deliveryBadge = {
+    unassigned: 'bg-slate-100 text-slate-500',
+    assigned:   'bg-blue-100 text-blue-600',
+    picked_up:  'bg-amber-100 text-amber-700',
+    delivered:  'bg-emerald-100 text-emerald-700',
+};
 const methodEmoji = { cash: '💵', gcash: '📱', card: '💳' };
 
 export default function AdminOrders() {
     const [orders, setOrders] = useState([]);
+    const [riders, setRiders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [expanded, setExpanded] = useState(null);
@@ -25,11 +32,20 @@ export default function AdminOrders() {
         api.get(`/admin/orders${params}`).then(r => { setOrders(r.data); setLoading(false); });
     };
 
-    useEffect(() => { load(filter); }, [filter]);
+    useEffect(() => {
+        load(filter);
+        api.get('/admin/riders').then(r => setRiders(r.data));
+    }, [filter]);
 
     const updateStatus = async (orderId, status) => {
         await api.patch(`/admin/orders/${orderId}/status`, { status });
         toast.success(`Order #${orderId} → ${status}`);
+        load(filter);
+    };
+
+    const assignRider = async (orderId, riderId) => {
+        await api.patch(`/admin/orders/${orderId}/assign-rider`, { rider_id: riderId || null });
+        toast.success(riderId ? 'Rider assigned' : 'Rider removed');
         load(filter);
     };
 
@@ -70,6 +86,7 @@ export default function AdminOrders() {
                                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500">Payment</th>
                                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500">Total</th>
                                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500">Status</th>
+                                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500">Delivery</th>
                                 <th className="px-5 py-3" />
                             </tr>
                         </thead>
@@ -90,6 +107,11 @@ export default function AdminOrders() {
                                             </select>
                                         </td>
                                         <td className="px-5 py-3">
+                                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${deliveryBadge[order.delivery_status] || 'bg-slate-100 text-slate-500'}`}>
+                                                {order.delivery_status?.replace('_', ' ') || 'unassigned'}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-3">
                                             <button onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                                                 className="text-slate-400 hover:text-slate-600 transition">
                                                 {expanded === order.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -98,8 +120,8 @@ export default function AdminOrders() {
                                     </tr>
                                     {expanded === order.id && (
                                         <tr className="bg-slate-50/60">
-                                            <td colSpan={6} className="px-5 py-4">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <td colSpan={7} className="px-5 py-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div>
                                                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Items</p>
                                                         {order.items?.map(item => (
@@ -112,6 +134,25 @@ export default function AdminOrders() {
                                                     <div>
                                                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Shipping</p>
                                                         <p className="text-xs text-slate-600">{order.shipping_address}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                                                            <Bike size={11} /> Assign Rider
+                                                        </p>
+                                                        <select
+                                                            value={order.rider_id || ''}
+                                                            onChange={e => assignRider(order.id, e.target.value)}
+                                                            className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-400 bg-white text-slate-700">
+                                                            <option value="">— No rider —</option>
+                                                            {riders.map(r => (
+                                                                <option key={r.id} value={r.id}>{r.name}</option>
+                                                            ))}
+                                                        </select>
+                                                        {order.rider && (
+                                                            <p className="text-xs text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
+                                                                <Bike size={11} /> {order.rider.name}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>

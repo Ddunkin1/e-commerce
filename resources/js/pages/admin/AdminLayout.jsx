@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Tag, ShoppingBag, Users, LogOut, Menu, X, Store, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Package, Tag, ShoppingBag, Users, Bike, LogOut, Menu, X, Store, ChevronRight } from 'lucide-react';
 import { clearAuth, getUser } from '../../lib/auth';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -11,6 +11,7 @@ const nav = [
     { to: '/admin/products',    icon: Package,         label: 'Products' },
     { to: '/admin/categories',  icon: Tag,             label: 'Categories' },
     { to: '/admin/users',       icon: Users,           label: 'Users' },
+    { to: '/admin/riders',      icon: Bike,            label: 'Riders' },
 ];
 
 function SidebarContent({ onClose }) {
