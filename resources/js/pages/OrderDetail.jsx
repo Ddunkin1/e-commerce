@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, ShoppingBag, CheckCircle2, Circle, Clock, Truck, PackageCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, ShoppingBag, CheckCircle2, Clock, Truck, PackageCheck, XCircle } from 'lucide-react';
 import api from '../lib/axios';
+import toast from 'react-hot-toast';
 
 const STEPS = [
-    { key: 'pending',    label: 'Order Placed',  icon: Clock },
-    { key: 'processing', label: 'Processing',    icon: PackageCheck },
-    { key: 'shipped',    label: 'Shipped',        icon: Truck },
-    { key: 'completed',  label: 'Delivered',      icon: CheckCircle2 },
+    { key: 'pending',    label: 'Order Placed', icon: Clock },
+    { key: 'processing', label: 'Processing',   icon: PackageCheck },
+    { key: 'shipping',   label: 'Out for Delivery', icon: Truck },
+    { key: 'completed',  label: 'Delivered',    icon: CheckCircle2 },
 ];
 
-const STATUS_INDEX = { pending: 0, processing: 1, shipped: 2, completed: 3 };
+const STATUS_INDEX = { pending: 0, processing: 1, shipping: 2, completed: 3 };
 
 const methodEmoji = { cash: '💵', gcash: '📱', card: '💳' };
 const methodLabel = { cash: 'Cash on Delivery', gcash: 'GCash', card: 'Credit / Debit Card' };
@@ -26,10 +27,26 @@ const statusBadge = {
 export default function OrderDetail() {
     const { id } = useParams();
     const [order, setOrder] = useState(null);
+    const [cancelling, setCancelling] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     useEffect(() => {
         api.get(`/orders/${id}`).then(r => setOrder(r.data));
     }, [id]);
+
+    const cancelOrder = async () => {
+        setCancelling(true);
+        try {
+            const res = await api.patch(`/orders/${id}/cancel`);
+            setOrder(res.data);
+            setShowConfirm(false);
+            toast.success('Order cancelled. Stock has been restored.');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Could not cancel order');
+        } finally {
+            setCancelling(false);
+        }
+    };
 
     if (!order) return (
         <div className="max-w-2xl mx-auto px-5 py-20 flex flex-col gap-4">
@@ -55,22 +72,47 @@ export default function OrderDetail() {
                     <h1 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Playfair Display, serif' }}>#{order.id}</h1>
                     <p className="text-xs text-stone-400 mt-1">{new Date(order.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
-                <span className={`text-xs font-semibold px-3 py-1.5 rounded-full capitalize ${statusBadge[order.status] || 'bg-stone-100 text-stone-500'}`}>
-                    {order.status}
-                </span>
+                <div className="flex items-center gap-3">
+                    <span className={`text-xs font-semibold px-3 py-1.5 rounded-full capitalize ${statusBadge[order.status] || 'bg-stone-100 text-stone-500'}`}>
+                        {order.status}
+                    </span>
+                    {order.status === 'pending' && !showConfirm && (
+                        <button
+                            onClick={() => setShowConfirm(true)}
+                            className="flex items-center gap-1.5 text-xs font-medium text-red-400 hover:text-red-500 border border-red-200 hover:border-red-300 px-3 py-1.5 rounded-full transition"
+                        >
+                            <XCircle size={13} /> Cancel Order
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {/* Cancel confirmation */}
+            {showConfirm && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 mb-5 flex items-center justify-between gap-4">
+                    <p className="text-sm text-red-600 font-medium">Are you sure you want to cancel this order?</p>
+                    <div className="flex gap-2 flex-shrink-0">
+                        <button onClick={() => setShowConfirm(false)}
+                            className="text-xs px-3 py-1.5 rounded-full border border-stone-200 text-stone-500 hover:bg-stone-50 transition">
+                            No, keep it
+                        </button>
+                        <button onClick={cancelOrder} disabled={cancelling}
+                            className="text-xs px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white font-medium transition disabled:opacity-50">
+                            {cancelling ? 'Cancelling...' : 'Yes, cancel'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Status tracker */}
             {!cancelled ? (
                 <div className="bg-white rounded-3xl border border-pink-50 shadow-sm p-6 mb-5">
                     <div className="flex items-center justify-between relative">
-                        {/* Progress line */}
                         <div className="absolute left-0 right-0 top-5 h-0.5 bg-pink-100 mx-8" />
                         <div
                             className="absolute left-8 top-5 h-0.5 bg-pink-400 transition-all duration-500"
                             style={{ width: `${stepIndex === 0 ? 0 : (stepIndex / (STEPS.length - 1)) * 100}%`, right: 'auto' }}
                         />
-
                         {STEPS.map((step, i) => {
                             const done = i <= stepIndex;
                             const Icon = step.icon;
@@ -88,8 +130,8 @@ export default function OrderDetail() {
                     </div>
                 </div>
             ) : (
-                <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 mb-5 text-sm text-red-500 font-medium">
-                    This order has been cancelled.
+                <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 mb-5 flex items-center gap-3 text-sm text-red-500 font-medium">
+                    <XCircle size={16} /> This order has been cancelled. Stock has been restored.
                 </div>
             )}
 

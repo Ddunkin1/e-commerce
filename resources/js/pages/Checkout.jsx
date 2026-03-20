@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, CreditCard } from 'lucide-react';
 import api from '../lib/axios';
@@ -14,6 +14,15 @@ export default function Checkout() {
     const navigate = useNavigate();
     const [form, setForm] = useState({ shipping_address: '', payment_method: 'cash' });
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        api.get('/cart').then(r => {
+            if (!r.data.items?.length) {
+                toast.error('Your cart is empty');
+                navigate('/cart');
+            }
+        }).catch(() => {});
+    }, []);
 
     const submit = async (e) => {
         e.preventDefault();

@@ -25,7 +25,7 @@ class OrderController extends Controller
         if ($order->user_id !== $request->user()->id) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-        return response()->json($order->load('items.product', 'payment'));
+        return response()->json($order->load('items.product', 'payment', 'rider'));
     }
 
     public function store(Request $request)
@@ -81,5 +81,30 @@ class OrderController extends Controller
         $cart->items()->delete();
 
         return response()->json($order->load('items.product', 'payment'), 201);
+    }
+
+    public function cancel(Request $request, Order $order)
+    {
+        if ($order->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($order->status !== 'pending') {
+            return response()->json(['message' => 'Only pending orders can be cancelled.'], 422);
+        }
+
+        foreach ($order->items as $item) {
+            if ($item->product) {
+                $item->product->increment('stock', $item->quantity);
+            }
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        if ($order->payment) {
+            $order->payment->update(['status' => 'cancelled']);
+        }
+
+        return response()->json($order->load('items.product', 'payment'));
     }
 }
