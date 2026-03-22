@@ -86,7 +86,9 @@ export default function ProductCard({ product }) {
                 <p className="text-xs text-stone-400 line-clamp-1">{product.description}</p>
                 <div className="flex items-center justify-between mt-auto pt-2">
                     <span className="text-pink-500 font-bold text-sm">₱{Number(product.price).toLocaleString()}</span>
-                    <span className="text-[11px] text-stone-400">{product.stock > 0 ? `${product.stock} in stock` : 'Sold out'}</span>
+                    <span className="text-[11px] text-stone-400">
+                        {product.sold_count > 0 ? `${product.sold_count} sold` : product.stock > 0 ? 'In stock' : 'Sold out'}
+                    </span>
                 </div>
             </div>
         </div>

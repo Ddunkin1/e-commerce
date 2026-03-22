@@ -12,10 +12,10 @@ const SORT_OPTIONS = [
 ];
 
 export default function Products() {
+    const [searchParams] = useSearchParams();
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selected, setSelected] = useState(searchParams.get('category') || 'all');
-    const [searchParams] = useSearchParams();
     const [search, setSearch] = useState(searchParams.get('search') || '');
     const [sort, setSort] = useState('default');
     const [loading, setLoading] = useState(true);

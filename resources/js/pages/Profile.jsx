@@ -25,7 +25,7 @@ export default function Profile() {
         setSavingInfo(true);
         try {
             const res = await api.patch('/profile', form);
-            setAuth(null, res.data);
+            setAuth(getToken(), res.data);
             toast.success('Profile updated!');
         } catch (err) {
             const msg = err.response?.data?.errors?.email?.[0] || err.response?.data?.message || 'Update failed';

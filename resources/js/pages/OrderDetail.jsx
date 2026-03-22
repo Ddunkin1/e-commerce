@@ -1,17 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, ShoppingBag, CheckCircle2, Clock, Truck, PackageCheck, XCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, ShoppingBag, CheckCircle2, Clock, Truck, PackageCheck, Bike, XCircle } from 'lucide-react';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
 
 const STEPS = [
-    { key: 'pending',    label: 'Order Placed', icon: Clock },
-    { key: 'processing', label: 'Processing',   icon: PackageCheck },
-    { key: 'shipping',   label: 'Out for Delivery', icon: Truck },
-    { key: 'completed',  label: 'Delivered',    icon: CheckCircle2 },
+    { key: 'placed',     label: 'Order Placed',    icon: Clock },
+    { key: 'processing', label: 'Processing',       icon: PackageCheck },
+    { key: 'assigned',   label: 'Rider Assigned',   icon: Bike },
+    { key: 'picked_up',  label: 'Out for Delivery', icon: Truck },
+    { key: 'delivered',  label: 'Delivered',        icon: CheckCircle2 },
 ];
 
-const STATUS_INDEX = { pending: 0, processing: 1, shipping: 2, completed: 3 };
+function getStepIndex(order) {
+    if (order.status === 'cancelled') return -1;
+    if (order.status === 'completed' || order.delivery_status === 'delivered') return 4;
+    if (order.delivery_status === 'picked_up') return 3;
+    if (order.delivery_status === 'assigned') return 2;
+    if (order.status === 'processing') return 1;
+    return 0;
+}
 
 const methodEmoji = { cash: '💵', gcash: '📱', card: '💳' };
 const methodLabel = { cash: 'Cash on Delivery', gcash: 'GCash', card: 'Credit / Debit Card' };
@@ -19,7 +27,6 @@ const methodLabel = { cash: 'Cash on Delivery', gcash: 'GCash', card: 'Credit / 
 const statusBadge = {
     pending:    'bg-yellow-50 text-yellow-600',
     processing: 'bg-blue-50 text-blue-600',
-    shipped:    'bg-purple-50 text-purple-600',
     completed:  'bg-green-50 text-green-600',
     cancelled:  'bg-red-50 text-red-500',
 };
@@ -28,19 +35,18 @@ export default function OrderDetail() {
     const { id } = useParams();
     const [order, setOrder] = useState(null);
     const [cancelling, setCancelling] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
 
-    useEffect(() => {
-        api.get(`/orders/${id}`).then(r => setOrder(r.data));
-    }, [id]);
+    const load = () => api.get(`/orders/${id}`).then(r => setOrder(r.data));
+
+    useEffect(() => { load(); }, [id]);
 
     const cancelOrder = async () => {
+        if (!confirm('Cancel this order?')) return;
         setCancelling(true);
         try {
-            const res = await api.patch(`/orders/${id}/cancel`);
-            setOrder(res.data);
-            setShowConfirm(false);
-            toast.success('Order cancelled. Stock has been restored.');
+            await api.patch(`/orders/${id}/cancel`);
+            toast.success('Order cancelled');
+            load();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Could not cancel order');
         } finally {
@@ -56,8 +62,9 @@ export default function OrderDetail() {
         </div>
     );
 
-    const stepIndex = STATUS_INDEX[order.status] ?? 0;
+    const stepIndex = getStepIndex(order);
     const cancelled = order.status === 'cancelled';
+    const canCancel = order.status === 'pending';
 
     return (
         <div className="max-w-2xl mx-auto px-5 py-10">
@@ -72,54 +79,37 @@ export default function OrderDetail() {
                     <h1 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Playfair Display, serif' }}>#{order.id}</h1>
                     <p className="text-xs text-stone-400 mt-1">{new Date(order.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end gap-2">
                     <span className={`text-xs font-semibold px-3 py-1.5 rounded-full capitalize ${statusBadge[order.status] || 'bg-stone-100 text-stone-500'}`}>
                         {order.status}
                     </span>
-                    {order.status === 'pending' && !showConfirm && (
-                        <button
-                            onClick={() => setShowConfirm(true)}
-                            className="flex items-center gap-1.5 text-xs font-medium text-red-400 hover:text-red-500 border border-red-200 hover:border-red-300 px-3 py-1.5 rounded-full transition"
-                        >
-                            <XCircle size={13} /> Cancel Order
+                    {canCancel && (
+                        <button onClick={cancelOrder} disabled={cancelling}
+                            className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-600 font-medium transition disabled:opacity-50">
+                            <XCircle size={13} />
+                            {cancelling ? 'Cancelling...' : 'Cancel Order'}
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Cancel confirmation */}
-            {showConfirm && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 mb-5 flex items-center justify-between gap-4">
-                    <p className="text-sm text-red-600 font-medium">Are you sure you want to cancel this order?</p>
-                    <div className="flex gap-2 flex-shrink-0">
-                        <button onClick={() => setShowConfirm(false)}
-                            className="text-xs px-3 py-1.5 rounded-full border border-stone-200 text-stone-500 hover:bg-stone-50 transition">
-                            No, keep it
-                        </button>
-                        <button onClick={cancelOrder} disabled={cancelling}
-                            className="text-xs px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white font-medium transition disabled:opacity-50">
-                            {cancelling ? 'Cancelling...' : 'Yes, cancel'}
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Status tracker */}
+            {/* Delivery tracker */}
             {!cancelled ? (
                 <div className="bg-white rounded-3xl border border-pink-50 shadow-sm p-6 mb-5">
-                    <div className="flex items-center justify-between relative">
-                        <div className="absolute left-0 right-0 top-5 h-0.5 bg-pink-100 mx-8" />
+                    <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wide mb-5">Delivery Status</h2>
+                    <div className="flex items-start justify-between relative">
+                        <div className="absolute left-5 right-5 top-5 h-0.5 bg-pink-100" />
                         <div
-                            className="absolute left-8 top-5 h-0.5 bg-pink-400 transition-all duration-500"
-                            style={{ width: `${stepIndex === 0 ? 0 : (stepIndex / (STEPS.length - 1)) * 100}%`, right: 'auto' }}
+                            className="absolute left-5 top-5 h-0.5 bg-pink-400 transition-all duration-700"
+                            style={{ width: stepIndex <= 0 ? 0 : `${(stepIndex / (STEPS.length - 1)) * 90}%` }}
                         />
                         {STEPS.map((step, i) => {
                             const done = i <= stepIndex;
                             const Icon = step.icon;
                             return (
-                                <div key={step.key} className="flex flex-col items-center gap-2 relative z-10">
+                                <div key={step.key} className="flex flex-col items-center gap-2 relative z-10 w-16">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${done ? 'bg-pink-500 border-pink-500 shadow-md shadow-pink-200' : 'bg-white border-pink-100'}`}>
-                                        <Icon size={16} className={done ? 'text-white' : 'text-stone-300'} />
+                                        <Icon size={15} className={done ? 'text-white' : 'text-stone-300'} />
                                     </div>
                                     <span className={`text-[10px] font-medium text-center leading-tight ${done ? 'text-pink-500' : 'text-stone-400'}`}>
                                         {step.label}
@@ -128,10 +118,30 @@ export default function OrderDetail() {
                             );
                         })}
                     </div>
+
+                    {/* Rider info */}
+                    {order.rider && (
+                        <div className="mt-5 pt-4 border-t border-pink-50 flex items-center gap-3">
+                            <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <Bike size={15} className="text-emerald-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-stone-400">Your Rider</p>
+                                <p className="text-sm font-semibold text-stone-700">{order.rider.name}</p>
+                            </div>
+                            <span className={`ml-auto text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${
+                                order.delivery_status === 'delivered' ? 'bg-emerald-100 text-emerald-700' :
+                                order.delivery_status === 'picked_up' ? 'bg-amber-100 text-amber-700' :
+                                'bg-blue-100 text-blue-700'
+                            }`}>
+                                {order.delivery_status?.replace('_', ' ')}
+                            </span>
+                        </div>
+                    )}
                 </div>
             ) : (
-                <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 mb-5 flex items-center gap-3 text-sm text-red-500 font-medium">
-                    <XCircle size={16} /> This order has been cancelled. Stock has been restored.
+                <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 mb-5 text-sm text-red-500 font-medium flex items-center gap-2">
+                    <XCircle size={16} /> This order has been cancelled.
                 </div>
             )}
 
@@ -159,7 +169,7 @@ export default function OrderDetail() {
                 </div>
             </div>
 
-            {/* Summary + Shipping */}
+            {/* Summary */}
             <div className="bg-white rounded-3xl border border-pink-50 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-pink-50">
                     <h2 className="font-semibold text-stone-700 text-sm">Order Details</h2>

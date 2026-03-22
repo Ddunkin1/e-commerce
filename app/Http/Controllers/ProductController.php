@@ -10,11 +10,21 @@ class ProductController extends Controller
 {
     public function index()
     {
-        return response()->json(Product::with('category')->get());
+        $products = Product::with('category')
+            ->withSum('orderItems', 'quantity')
+            ->get()
+            ->map(function ($p) {
+                $p->sold_count = (int) ($p->order_items_sum_quantity ?? 0);
+                return $p;
+            });
+
+        return response()->json($products);
     }
 
     public function show(Product $product)
     {
+        $product->loadSum('orderItems', 'quantity');
+        $product->sold_count = (int) ($product->order_items_sum_quantity ?? 0);
         return response()->json($product->load('category'));
     }
 

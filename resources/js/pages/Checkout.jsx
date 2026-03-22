@@ -28,9 +28,8 @@ export default function Checkout() {
         e.preventDefault();
         setLoading(true);
         try {
-            await api.post('/orders', form);
-            toast.success('Order placed! 🎉');
-            navigate('/orders');
+            const res = await api.post('/orders', form);
+            navigate(`/order-success/${res.data.id}`);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Checkout failed');
         } finally {
