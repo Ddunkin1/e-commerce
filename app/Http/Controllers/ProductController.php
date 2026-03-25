@@ -12,9 +12,13 @@ class ProductController extends Controller
     {
         $products = Product::with('category')
             ->withSum('orderItems', 'quantity')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->get()
             ->map(function ($p) {
-                $p->sold_count = (int) ($p->order_items_sum_quantity ?? 0);
+                $p->sold_count  = (int) ($p->order_items_sum_quantity ?? 0);
+                $p->avg_rating  = $p->reviews_avg_rating ? round($p->reviews_avg_rating, 1) : null;
+                $p->review_count = (int) ($p->reviews_count ?? 0);
                 return $p;
             });
 

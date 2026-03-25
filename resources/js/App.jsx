@@ -21,6 +21,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminRiders from './pages/admin/AdminRiders';
 import RiderDashboard from './pages/rider/RiderDashboard';
+import NotFound from './pages/NotFound';
 import { isLoggedIn, isAdmin, isRider } from './lib/auth';
 
 function Protected({ children }) {
@@ -79,6 +80,9 @@ export default function App() {
 
                 {/* Rider */}
                 <Route path="/rider" element={<RiderOnly><RiderDashboard /></RiderOnly>} />
+
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>
     );

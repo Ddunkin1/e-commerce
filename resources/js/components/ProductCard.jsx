@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart, Zap } from 'lucide-react';
+import { ShoppingBag, Heart, Zap, Star } from 'lucide-react';
 import api from '../lib/axios';
 import { isLoggedIn } from '../lib/auth';
 import toast from 'react-hot-toast';
@@ -84,7 +84,20 @@ export default function ProductCard({ product }) {
                     <p className="font-semibold text-stone-700 text-sm leading-snug hover:text-pink-500 transition">{product.name}</p>
                 </Link>
                 <p className="text-xs text-stone-400 line-clamp-1">{product.description}</p>
-                <div className="flex items-center justify-between mt-auto pt-2">
+
+                {product.avg_rating ? (
+                    <div className="flex items-center gap-1 mt-0.5">
+                        {[1,2,3,4,5].map(n => (
+                            <Star key={n} size={11}
+                                className={n <= Math.round(product.avg_rating) ? 'fill-amber-400 text-amber-400' : 'text-stone-200'} />
+                        ))}
+                        <span className="text-[11px] text-stone-400 ml-0.5">{product.avg_rating} ({product.review_count})</span>
+                    </div>
+                ) : (
+                    <div className="h-4" />
+                )}
+
+                <div className="flex items-center justify-between mt-auto pt-1">
                     <span className="text-pink-500 font-bold text-sm">₱{Number(product.price).toLocaleString()}</span>
                     <span className="text-[11px] text-stone-400">
                         {product.sold_count > 0 ? `${product.sold_count} sold` : product.stock > 0 ? 'In stock' : 'Sold out'}
