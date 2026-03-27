@@ -10,6 +10,36 @@ const statusBadge = {
     cancelled:  'bg-red-100 text-red-600',
 };
 
+function RevenueChart({ data }) {
+    if (!data?.length) return (
+        <div className="flex items-center justify-center h-32 text-slate-400 text-sm">No revenue data yet</div>
+    );
+    const max = Math.max(...data.map(d => d.revenue));
+    return (
+        <div className="flex items-end gap-2 h-32 px-1">
+            {data.map(d => {
+                const pct = max > 0 ? (d.revenue / max) * 100 : 0;
+                const month = new Date(d.month + '-01').toLocaleDateString('en-PH', { month: 'short' });
+                return (
+                    <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group">
+                        <div className="relative w-full flex items-end" style={{ height: '96px' }}>
+                            <div
+                                className="w-full bg-indigo-500 group-hover:bg-indigo-600 rounded-t-md transition-all duration-300 relative"
+                                style={{ height: `${Math.max(pct, 4)}%` }}
+                            >
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    ₱{Number(d.revenue).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+                        <span className="text-[10px] text-slate-400">{month}</span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function Dashboard() {
     const [stats, setStats] = useState(null);
 
@@ -58,6 +88,23 @@ export default function Dashboard() {
                     </p>
                 </div>
             )}
+
+            {/* Revenue chart */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold text-slate-800 text-sm">Monthly Revenue</h2>
+                    {stats?.revenue_by_month?.length > 0 && (
+                        <span className="text-xs text-slate-400">
+                            {stats.revenue_by_month.length} month{stats.revenue_by_month.length !== 1 ? 's' : ''}
+                        </span>
+                    )}
+                </div>
+                {!stats ? (
+                    <div className="h-32 bg-slate-100 rounded-lg animate-pulse" />
+                ) : (
+                    <RevenueChart data={stats.revenue_by_month} />
+                )}
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Orders */}

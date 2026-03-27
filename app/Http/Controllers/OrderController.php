@@ -102,7 +102,7 @@ class OrderController extends Controller
         $order->update(['status' => 'cancelled']);
 
         if ($order->payment) {
-            $order->payment->update(['status' => 'cancelled']);
+            $order->payment->update(['status' => 'failed']);
         }
 
         return response()->json($order->load('items.product', 'payment'));
