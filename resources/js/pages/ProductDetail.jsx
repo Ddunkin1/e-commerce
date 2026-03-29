@@ -158,7 +158,12 @@ export default function ProductDetail() {
 
                     <span className="text-3xl font-bold text-pink-500">₱{Number(product.price).toLocaleString()}</span>
                     <p className="text-stone-400 text-sm leading-relaxed">{product.description}</p>
-                    <div className="text-xs text-stone-400">{product.stock} items in stock</div>
+                    <div className="flex items-center gap-3 text-xs text-stone-400">
+                        <span>{product.stock} in stock</span>
+                        {product.sold_count > 0 && (
+                            <><span className="text-stone-200">·</span><span className="text-pink-400 font-medium">{product.sold_count} sold</span></>
+                        )}
+                    </div>
 
                     {/* Size */}
                     <div>
