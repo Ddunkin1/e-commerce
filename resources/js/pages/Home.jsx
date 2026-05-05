@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Truck, RotateCcw, ShieldCheck } from 'lucide-react';
 import api from '../lib/axios';
+import { isLoggedIn } from '../lib/auth';
 
 const features = [
     { icon: Truck, label: 'Free Delivery', sub: 'On orders over ₱999' },
@@ -43,9 +44,11 @@ export default function Home() {
                             <Link to="/products" className="bg-pink-500 hover:bg-pink-600 text-white font-semibold px-7 py-3 rounded-full shadow-lg shadow-pink-200 transition">
                                 Shop Now
                             </Link>
-                            <Link to="/register" className="border border-pink-300 text-pink-500 font-semibold px-7 py-3 rounded-full hover:bg-pink-50 transition">
-                                Join Us
-                            </Link>
+                            {!isLoggedIn() && (
+                                <Link to="/register" className="border border-pink-300 text-pink-500 font-semibold px-7 py-3 rounded-full hover:bg-pink-50 transition">
+                                    Join Us
+                                </Link>
+                            )}
                         </div>
                     </div>
                     <div className="flex-1 flex justify-center">
@@ -102,17 +105,19 @@ export default function Home() {
                 </section>
             )}
 
-            {/* CTA Banner */}
-            <section className="max-w-6xl mx-auto px-5 pb-14">
-                <div className="rounded-3xl p-10 text-center text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #ec4899, #a855f7)' }}>
-                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, white 0%, transparent 60%)' }} />
-                    <h2 className="text-2xl md:text-3xl font-bold mb-3 relative" style={{ fontFamily: 'Playfair Display, serif' }}>Ready to start shopping?</h2>
-                    <p className="text-pink-100 mb-6 relative">Create an account and get access to exclusive deals.</p>
-                    <Link to="/register" className="bg-white text-pink-500 font-semibold px-7 py-3 rounded-full hover:bg-pink-50 transition shadow-lg relative">
-                        Create Account
-                    </Link>
-                </div>
-            </section>
+            {/* CTA Banner — only for guests */}
+            {!isLoggedIn() && (
+                <section className="max-w-6xl mx-auto px-5 pb-14">
+                    <div className="rounded-3xl p-10 text-center text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #ec4899, #a855f7)' }}>
+                        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, white 0%, transparent 60%)' }} />
+                        <h2 className="text-2xl md:text-3xl font-bold mb-3 relative" style={{ fontFamily: 'Playfair Display, serif' }}>Ready to start shopping?</h2>
+                        <p className="text-pink-100 mb-6 relative">Create an account and get access to exclusive deals.</p>
+                        <Link to="/register" className="bg-white text-pink-500 font-semibold px-7 py-3 rounded-full hover:bg-pink-50 transition shadow-lg relative">
+                            Create Account
+                        </Link>
+                    </div>
+                </section>
+            )}
         </div>
     );
 }
