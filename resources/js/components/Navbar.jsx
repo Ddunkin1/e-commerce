@@ -73,6 +73,9 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center gap-3">
                     {isLoggedIn() ? (
                         <>
+                            <Link to="/wishlist" className="p-2 rounded-full hover:bg-pink-50 transition" title="Wishlist">
+                                <Heart size={20} className="text-pink-400" />
+                            </Link>
                             <Link to="/cart" className="relative p-2 rounded-full hover:bg-pink-50 transition">
                                 <ShoppingBag size={20} className="text-pink-400" />
                                 {cartCount > 0 && (
@@ -109,6 +112,7 @@ export default function Navbar() {
                     {link('/', 'Home')}
                     {link('/products', 'Shop')}
                     {isLoggedIn() && link('/orders', 'My Orders')}
+                    {isLoggedIn() && link('/wishlist', 'Wishlist')}
                     {isLoggedIn() && link('/cart', 'Cart')}
                     {isLoggedIn() && link('/profile', 'Profile')}
                     {isLoggedIn()

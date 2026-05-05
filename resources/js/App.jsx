@@ -12,6 +12,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Profile from './pages/Profile';
+import Wishlist from './pages/Wishlist';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/admin/Dashboard';
@@ -69,6 +70,7 @@ export default function App() {
                 <Route path="/orders/:id" element={<Protected><StoreLayout><OrderDetail /></StoreLayout></Protected>} />
                 <Route path="/order-success/:id" element={<Protected><StoreLayout><OrderSuccess /></StoreLayout></Protected>} />
                 <Route path="/profile" element={<Protected><StoreLayout><Profile /></StoreLayout></Protected>} />
+                <Route path="/wishlist" element={<Protected><StoreLayout><Wishlist /></StoreLayout></Protected>} />
 
                 {/* Admin */}
                 <Route path="/admin" element={<AdminOnly><Dashboard /></AdminOnly>} />

@@ -8,6 +8,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RiderController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -59,6 +60,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/admin/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin']);
     Route::get('/admin/riders', [AdminController::class, 'riders']);
     Route::post('/admin/riders', [AdminController::class, 'createRider']);
+
+    // Wishlist
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist/{product}', [WishlistController::class, 'toggle']);
+    Route::get('/wishlist/{product}/check', [WishlistController::class, 'check']);
 
     // Rider
     Route::get('/rider/orders', [RiderController::class, 'myOrders']);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart, ArrowLeft, Minus, Plus, Zap, Star } from 'lucide-react';
+import { ShoppingBag, Heart, ArrowLeft, Minus, Plus, Zap, Star, Flame } from 'lucide-react';
 import api from '../lib/axios';
 import { isLoggedIn } from '../lib/auth';
 import toast from 'react-hot-toast';
@@ -32,9 +32,11 @@ export default function ProductDetail() {
     const [product, setProduct] = useState(null);
     const [qty, setQty] = useState(1);
     const [size, setSize] = useState('M');
-    const [liked, setLiked] = useState(false);
+    const [wishlisted, setWishlisted] = useState(false);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
     const [adding, setAdding] = useState(false);
     const [buying, setBuying] = useState(false);
+    const [related, setRelated] = useState([]);
 
     const [reviews, setReviews] = useState([]);
     const [avgRating, setAvgRating] = useState(null);
@@ -57,7 +59,18 @@ export default function ProductDetail() {
     };
 
     useEffect(() => {
-        api.get(`/products/${id}`).then(r => setProduct(r.data));
+        api.get(`/products/${id}`).then(r => {
+            setProduct(r.data);
+            // load related products from same category
+            api.get('/products').then(all => {
+                const products = Array.isArray(all.data) ? all.data : [];
+                const filtered = products.filter(p => p.category_id === r.data.category_id && p.id !== r.data.id);
+                setRelated(filtered.slice(0, 4));
+            });
+        });
+        if (isLoggedIn()) {
+            api.get(`/wishlist/${id}/check`).then(r => setWishlisted(r.data.wishlisted)).catch(() => {});
+        }
         loadReviews();
         loadEligibility();
     }, [id]);
@@ -129,8 +142,20 @@ export default function ProductDetail() {
                         ? <img src={product.image} alt={product.name} className="w-full h-full object-cover" style={{ minHeight: '380px' }} />
                         : <div className="flex items-center justify-center h-96"><ShoppingBag size={64} className="text-pink-200" /></div>
                     }
-                    <button onClick={() => setLiked(!liked)} className="absolute top-4 right-4 p-2.5 bg-white rounded-full shadow-md">
-                        <Heart size={18} className={`transition ${liked ? 'fill-pink-400 text-pink-400' : 'text-pink-300'}`} />
+                    <button
+                        onClick={async () => {
+                            if (!isLoggedIn()) { toast.error('Please login first'); navigate('/login'); return; }
+                            setWishlistLoading(true);
+                            try {
+                                const r = await api.post(`/wishlist/${id}`);
+                                setWishlisted(r.data.wishlisted);
+                                toast.success(r.data.wishlisted ? 'Added to wishlist!' : 'Removed from wishlist');
+                            } finally { setWishlistLoading(false); }
+                        }}
+                        disabled={wishlistLoading}
+                        className="absolute top-4 right-4 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
+                    >
+                        <Heart size={18} className={`transition ${wishlisted ? 'fill-pink-400 text-pink-400' : 'text-pink-300'}`} />
                     </button>
                     {product.stock === 0 && (
                         <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full">Out of Stock</span>
@@ -203,6 +228,37 @@ export default function ProductDetail() {
                     </div>
                 </div>
             </div>
+
+            {/* Related Products */}
+            {related.length > 0 && (
+                <div className="mt-14">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-stone-800" style={{ fontFamily: 'Playfair Display, serif' }}>You Might Also Like</h2>
+                        <Link to="/products" className="text-sm text-pink-500 hover:text-pink-600 font-medium">View all →</Link>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {related.map(p => (
+                            <Link key={p.id} to={`/products/${p.id}`} className="group bg-white rounded-2xl border border-pink-50 shadow-sm hover:shadow-lg transition-all overflow-hidden">
+                                <div className="h-40 bg-gradient-to-br from-pink-50 to-rose-50 overflow-hidden">
+                                    {p.image
+                                        ? <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        : <div className="w-full h-full flex items-center justify-center"><ShoppingBag size={28} className="text-pink-200" /></div>
+                                    }
+                                </div>
+                                <div className="p-3">
+                                    <p className="text-xs text-stone-400 line-clamp-1 mb-0.5">{p.name}</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-pink-500 font-bold text-sm">₱{Number(p.price).toLocaleString()}</span>
+                                        {p.sold_count > 0 && (
+                                            <span className="text-[10px] text-stone-400 flex items-center gap-0.5"><Flame size={9} className="text-pink-400" />{p.sold_count}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Reviews section */}
             <div className="mt-14">
