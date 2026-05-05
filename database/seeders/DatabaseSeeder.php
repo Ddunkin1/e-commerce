@@ -10,11 +10,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'name'     => 'Admin',
-            'email'    => 'admin@shopease.com',
-            'password' => Hash::make('password'),
-            'is_admin' => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@shopease.com'],
+            ['name' => 'Admin', 'password' => Hash::make('password'), 'is_admin' => true]
+        );
+
+        $this->call(CategorySeeder::class);
     }
 }
