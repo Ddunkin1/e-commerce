@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Heart, LogOut, User, Menu, X, Search } from 'lucide-react';
-import { clearAuth, getUser, isLoggedIn } from '../lib/auth';
+import { clearAuth, getUser, isLoggedIn, isAdmin } from '../lib/auth';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
 
@@ -84,6 +84,11 @@ export default function Navbar() {
                                     </span>
                                 )}
                             </Link>
+                            {isAdmin() && (
+                                <Link to="/admin" className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition">
+                                    Admin Panel
+                                </Link>
+                            )}
                             <Link to="/profile" className="flex items-center gap-2 bg-pink-50 hover:bg-pink-100 rounded-full px-3 py-1.5 transition">
                                 <User size={14} className="text-pink-400" />
                                 <span className="text-xs font-medium text-pink-600">{user?.name?.split(' ')[0]}</span>
@@ -115,6 +120,7 @@ export default function Navbar() {
                     {isLoggedIn() && link('/wishlist', 'Wishlist')}
                     {isLoggedIn() && link('/cart', 'Cart')}
                     {isLoggedIn() && link('/profile', 'Profile')}
+                    {isAdmin() && link('/admin', 'Admin Panel')}
                     {isLoggedIn()
                         ? <button onClick={logout} className="text-sm text-left text-rose-400">Logout</button>
                         : <Link to="/login" className="text-sm text-pink-500">Login / Register</Link>
