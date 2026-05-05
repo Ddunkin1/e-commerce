@@ -1,10 +1,84 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Pencil, Trash2, X, Search, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Search, Upload, ChevronDown, ChevronRight } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 
 const empty = { category_id: '', name: '', description: '', price: '', stock: '', image: '' };
+
+function ProductRow({ p, onEdit, onDelete }) {
+    return (
+        <tr className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition">
+            <td className="px-5 py-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {p.image ? <img src={p.image} className="w-full h-full object-cover rounded-lg" /> : <span className="text-sm">📦</span>}
+                    </div>
+                    <span className="font-medium text-slate-700">{p.name}</span>
+                </div>
+            </td>
+            <td className="px-5 py-3 font-semibold text-slate-700">₱{Number(p.price).toLocaleString()}</td>
+            <td className="px-5 py-3">
+                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                    p.stock === 0 ? 'bg-red-100 text-red-600' :
+                    p.stock <= 10 ? 'bg-amber-100 text-amber-700' :
+                    'bg-emerald-100 text-emerald-700'
+                }`}>
+                    {p.stock === 0 ? 'Out of stock' : p.stock <= 10 ? `Low (${p.stock})` : p.stock}
+                </span>
+            </td>
+            <td className="px-5 py-3">
+                <div className="flex items-center gap-1.5 justify-end">
+                    <button onClick={() => onEdit(p)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                        <Pencil size={14} />
+                    </button>
+                    <button onClick={() => onDelete(p.id, p.name)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                        <Trash2 size={14} />
+                    </button>
+                </div>
+            </td>
+        </tr>
+    );
+}
+
+function CategoryGroup({ name, products, onEdit, onDelete, forceOpen }) {
+    const [open, setOpen] = useState(true);
+    const isOpen = forceOpen || open;
+
+    return (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <button
+                onClick={() => setOpen(o => !o)}
+                className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 hover:bg-slate-100 transition"
+            >
+                <div className="flex items-center gap-2.5">
+                    {isOpen ? <ChevronDown size={15} className="text-slate-400" /> : <ChevronRight size={15} className="text-slate-400" />}
+                    <span className="font-semibold text-slate-700 text-sm">{name}</span>
+                    <span className="bg-indigo-100 text-indigo-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+                        {products.length} {products.length === 1 ? 'product' : 'products'}
+                    </span>
+                </div>
+            </button>
+            {isOpen && (
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="border-b border-slate-100">
+                            <th className="text-left px-5 py-2.5 text-xs font-semibold text-slate-400">Product</th>
+                            <th className="text-left px-5 py-2.5 text-xs font-semibold text-slate-400">Price</th>
+                            <th className="text-left px-5 py-2.5 text-xs font-semibold text-slate-400">Stock</th>
+                            <th className="px-5 py-2.5" />
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {products.map(p => (
+                            <ProductRow key={p.id} p={p} onEdit={onEdit} onDelete={onDelete} />
+                        ))}
+                    </tbody>
+                </table>
+            )}
+        </div>
+    );
+}
 
 export default function AdminProducts() {
     const [products, setProducts] = useState([]);
@@ -70,10 +144,20 @@ export default function AdminProducts() {
         load();
     };
 
+    const q = search.toLowerCase();
     const filtered = products.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.category?.name?.toLowerCase().includes(search.toLowerCase())
+        p.name.toLowerCase().includes(q) ||
+        p.category?.name?.toLowerCase().includes(q)
     );
+    const isSearching = search.trim().length > 0;
+
+    // Group filtered products by category
+    const grouped = filtered.reduce((acc, p) => {
+        const cat = p.category?.name || 'Uncategorized';
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(p);
+        return acc;
+    }, {});
 
     return (
         <AdminLayout>
@@ -138,56 +222,25 @@ export default function AdminProducts() {
                 </div>
             )}
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-slate-100 bg-slate-50">
-                            <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500">Product</th>
-                            <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500">Category</th>
-                            <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500">Price</th>
-                            <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500">Stock</th>
-                            <th className="px-5 py-3" />
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.length === 0 ? (
-                            <tr><td colSpan={5} className="text-center py-12 text-slate-400">No products found</td></tr>
-                        ) : filtered.map(p => (
-                            <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition">
-                                <td className="px-5 py-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                                            {p.image ? <img src={p.image} className="w-full h-full object-cover rounded-lg" /> : <span className="text-sm">📦</span>}
-                                        </div>
-                                        <span className="font-medium text-slate-700">{p.name}</span>
-                                    </div>
-                                </td>
-                                <td className="px-5 py-3 text-slate-500 text-xs">{p.category?.name}</td>
-                                <td className="px-5 py-3 font-semibold text-slate-700">₱{Number(p.price).toLocaleString()}</td>
-                                <td className="px-5 py-3">
-                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                                        p.stock === 0 ? 'bg-red-100 text-red-600' :
-                                        p.stock <= 10 ? 'bg-amber-100 text-amber-700' :
-                                        'bg-emerald-100 text-emerald-700'
-                                    }`}>
-                                        {p.stock === 0 ? 'Out of stock' : p.stock <= 10 ? `Low (${p.stock})` : p.stock}
-                                    </span>
-                                </td>
-                                <td className="px-5 py-3">
-                                    <div className="flex items-center gap-1.5 justify-end">
-                                        <button onClick={() => openEdit(p)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button onClick={() => destroy(p.id, p.name)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            {/* Grouped by category */}
+            {Object.keys(grouped).length === 0 ? (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm py-12 text-center text-slate-400 text-sm">
+                    No products found
+                </div>
+            ) : (
+                <div className="flex flex-col gap-3">
+                    {Object.entries(grouped).map(([catName, items]) => (
+                        <CategoryGroup
+                            key={catName}
+                            name={catName}
+                            products={items}
+                            onEdit={openEdit}
+                            onDelete={destroy}
+                            forceOpen={isSearching}
+                        />
+                    ))}
+                </div>
+            )}
         </AdminLayout>
     );
 }
