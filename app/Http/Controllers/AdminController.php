@@ -94,24 +94,28 @@ class AdminController extends Controller
             'name'      => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email'     => 'required|email|unique:users,email',
-            'password'  => 'required|min:6',
             'phone'     => 'required|string|max:20',
             'address'   => 'required|string',
             'birthdate' => 'required|date|before:-18 years',
         ]);
 
+        $tempPassword = strtolower($request->last_name) . date('Y');
+
         $rider = User::create([
             'name'      => $request->name,
             'last_name' => $request->last_name,
             'email'     => $request->email,
-            'password'  => $request->password,
+            'password'  => $tempPassword,
             'phone'     => $request->phone,
             'address'   => $request->address,
             'birthdate' => $request->birthdate,
             'is_rider'  => true,
         ]);
 
-        return response()->json($rider, 201);
+        return response()->json([
+            'rider'          => $rider,
+            'temp_password'  => $tempPassword,
+        ], 201);
     }
 
     public function assignRider(Request $request, Order $order)
