@@ -91,16 +91,24 @@ class AdminController extends Controller
     {
         $this->guard($request);
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
+            'name'      => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required|min:6',
+            'phone'     => 'required|string|max:20',
+            'address'   => 'required|string',
+            'birthdate' => 'required|date|before:-18 years',
         ]);
 
         $rider = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => $request->password,
-            'is_rider' => true,
+            'name'      => $request->name,
+            'last_name' => $request->last_name,
+            'email'     => $request->email,
+            'password'  => $request->password,
+            'phone'     => $request->phone,
+            'address'   => $request->address,
+            'birthdate' => $request->birthdate,
+            'is_rider'  => true,
         ]);
 
         return response()->json($rider, 201);

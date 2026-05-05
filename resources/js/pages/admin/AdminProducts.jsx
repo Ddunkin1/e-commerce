@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X, Search } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Plus, Pencil, Trash2, X, Search, Upload } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -14,6 +14,8 @@ export default function AdminProducts() {
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
+    const [uploading, setUploading] = useState(false);
+    const fileRef = useRef(null);
 
     const load = () => Promise.all([api.get('/products'), api.get('/categories')]).then(([p, c]) => {
         setProducts(Array.isArray(p.data) ? p.data : []);
@@ -27,6 +29,23 @@ export default function AdminProducts() {
         setForm({ category_id: p.category_id, name: p.name, description: p.description || '', price: p.price, stock: p.stock, image: p.image || '' });
         setEditing(p.id);
         setShowForm(true);
+    };
+
+    const handleImageFile = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const data = new FormData();
+        data.append('image', file);
+        setUploading(true);
+        try {
+            const res = await api.post('/products/image', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+            setForm(f => ({ ...f, image: res.data.url }));
+            toast.success('Image uploaded');
+        } catch {
+            toast.error('Image upload failed');
+        } finally {
+            setUploading(false);
+        }
     };
 
     const submit = async (e) => {
@@ -91,12 +110,23 @@ export default function AdminProducts() {
                                 <option value="">Select Category</option>
                                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
-                            {[['name','Product Name','text',true],['price','Price (₱)','number',true],['stock','Stock','number',true],['image','Image URL','text',false]].map(([key,label,type,req]) => (
+                            {[['name','Product Name','text',true],['price','Price (₱)','number',true],['stock','Stock','number',true]].map(([key,label,type,req]) => (
                                 <input key={key} type={type} placeholder={label} value={form[key]}
                                     onChange={e => setForm({ ...form, [key]: e.target.value })}
                                     required={req} min={type === 'number' ? 0 : undefined}
                                     className="border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400" />
                             ))}
+                            <div>
+                                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageFile} />
+                                <button type="button" onClick={() => fileRef.current.click()} disabled={uploading}
+                                    className="w-full flex items-center justify-center gap-2 border border-dashed border-slate-300 rounded-lg py-2.5 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-500 transition disabled:opacity-50">
+                                    <Upload size={14} />
+                                    {uploading ? 'Uploading...' : form.image ? 'Change Photo' : 'Upload Photo'}
+                                </button>
+                                {form.image && (
+                                    <img src={form.image} alt="preview" className="mt-2 h-24 w-full object-cover rounded-lg border border-slate-100" />
+                                )}
+                            </div>
                             <textarea placeholder="Description (optional)" rows={2} value={form.description}
                                 onChange={e => setForm({ ...form, description: e.target.value })}
                                 className="border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 resize-none" />

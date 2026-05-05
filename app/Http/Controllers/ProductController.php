@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -30,6 +31,13 @@ class ProductController extends Controller
         $product->loadSum('orderItems', 'quantity');
         $product->sold_count = (int) ($product->order_items_sum_quantity ?? 0);
         return response()->json($product->load('category'));
+    }
+
+    public function uploadImage(Request $request)
+    {
+        $request->validate(['image' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096']);
+        $path = $request->file('image')->store('products', 'public');
+        return response()->json(['url' => Storage::url($path)]);
     }
 
     public function store(Request $request)

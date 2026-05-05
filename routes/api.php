@@ -42,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel']);
 
     // Products & Categories CRUD
+    Route::post('/products/image', [ProductController::class, 'uploadImage']);
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::put('/categories/{category}', [CategoryController::class, 'update']);
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);

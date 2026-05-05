@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Truck, RotateCcw, ShieldCheck } from 'lucide-react';
 import api from '../lib/axios';
-import ProductCard from '../components/ProductCard';
 
 const features = [
     { icon: Truck, label: 'Free Delivery', sub: 'On orders over ₱999' },
@@ -21,19 +20,10 @@ const CATEGORY_COLORS = [
 ];
 
 export default function Home() {
-    const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        Promise.all([
-            api.get('/products'),
-            api.get('/categories'),
-        ]).then(([p, c]) => {
-            setProducts(Array.isArray(p.data) ? p.data.slice(0, 8) : []);
-            setCategories(Array.isArray(c.data) ? c.data : []);
-            setLoading(false);
-        });
+        api.get('/categories').then(r => setCategories(Array.isArray(r.data) ? r.data : []));
     }, []);
 
     return (
@@ -111,26 +101,6 @@ export default function Home() {
                     </div>
                 </section>
             )}
-
-            {/* Featured Products */}
-            <section className="max-w-6xl mx-auto px-5 py-14">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <p className="text-xs text-pink-400 font-semibold uppercase tracking-widest mb-1">Handpicked for you</p>
-                        <h2 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Playfair Display, serif' }}>Featured Products</h2>
-                    </div>
-                    <Link to="/products" className="text-sm text-pink-500 hover:text-pink-600 font-medium">View all →</Link>
-                </div>
-                {loading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[...Array(8)].map((_, i) => <div key={i} className="skeleton h-64" />)}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {products.map(p => <ProductCard key={p.id} product={p} />)}
-                    </div>
-                )}
-            </section>
 
             {/* CTA Banner */}
             <section className="max-w-6xl mx-auto px-5 pb-14">
